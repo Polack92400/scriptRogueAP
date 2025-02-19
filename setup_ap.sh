@@ -92,6 +92,8 @@ cat <<EOF > /var/www/html/index.html
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            font-size: 16px;
+            transform: scale(1.5);
         }
 
         form {
@@ -170,6 +172,8 @@ cat <<EOF > /var/www/html/hotspot-detect.html
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            font-size: 16px;
+            transform: scale(1.5);
         }
 
         form {
